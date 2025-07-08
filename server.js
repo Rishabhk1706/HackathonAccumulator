@@ -1,8 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import cors from 'cors';
-
 import collegeRoutes from './routes/collegeRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
@@ -16,7 +14,6 @@ const app = express();
 
 const PORT = process.env.PORT
 
-app.use(cors());
 app.use(express.json());
 
 mongoose
