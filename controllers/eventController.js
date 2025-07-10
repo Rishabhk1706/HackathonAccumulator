@@ -12,7 +12,8 @@ export const getAllEvents = async (req, res) => {
 export const getEventById = async (req, res) => {
   const event = await Event.findById(req.params.id)
     .populate("createdBy", "name")
-    .populate("college", "name");
+    .populate("college", "name")
+    .populate("registeredUsers", "_id");                                // just _id is enough to check if user is registered
   res.status(200).json(event);
 };
 
@@ -33,4 +34,34 @@ export const updateEvent = async (req, res) => {
 export const deleteEvent = async (req, res) => {
   const deleted = await Event.findByIdAndDelete(req.params.id);
   res.status(200).json(deleted);
+};
+
+// Register user for event
+export const registerForEvent = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+
+    if (!event) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    // Check if already registered
+    if (event.registeredUsers.includes(req.user.id)) {
+      return res.status(400).json({ error: "You are already registered for this event." });
+    }
+
+    // Check if event is full
+    if (event.isFull()) {
+      return res.status(400).json({ error: "Event has reached max participants." });
+    }
+
+    // Register user
+    event.registeredUsers.push(req.user.id);
+    await event.save();
+
+    res.status(200).json({ message: "Successfully registered for the event." });
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({ error: "Server error while registering." });
+  }
 };

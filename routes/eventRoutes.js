@@ -4,7 +4,8 @@ import {
   getEventById,
   createEvent,
   updateEvent,
-  deleteEvent
+  deleteEvent,
+  registerForEvent
 } from "../controllers/eventController.js";
 import {auth} from "../middleware/authMiddleware.js"
 
@@ -15,5 +16,6 @@ router.get("/:id", getEventById);
 router.post("/",auth, createEvent);
 router.put("/:id",auth, updateEvent);
 router.delete("/:id",auth, deleteEvent);
+router.post("/:id/register", auth, registerForEvent);
 
 export default router;
