@@ -4,7 +4,7 @@ import MatchRequest from "../models/MatchRequest.js";
 export const getAllMatchRequests = async (req, res) => {
   const requests = await MatchRequest.find()
     .populate("user", "name email")
-    .populate("event", "title");
+    .populate("event", "title startDate");                    //added startDate 11-07
   res.status(200).json(requests);
 };
 
@@ -16,11 +16,41 @@ export const getMatchRequestById = async (req, res) => {
   res.status(200).json(request);
 };
 
-// Create new match request
+// Create new match request — now with duplication check
 export const createMatchRequest = async (req, res) => {
-  const newRequest = new MatchRequest(req.body);
-  await newRequest.save();
-  res.status(201).json(newRequest);
+  try {
+    const { event, maxTeamSize, lookingForRoles, skills } = req.body;
+
+    if (!event || !maxTeamSize || !lookingForRoles || !skills) {
+      return res.status(400).json({ error: "All fields are required." });
+    }
+
+    // Prevent multiple match requests by same user for same event
+    const existing = await MatchRequest.findOne({
+      user: req.user.id,
+      event,
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        error: "You have already created a match request for this event.",
+      });
+    }
+
+    const newRequest = new MatchRequest({
+      user: req.user.id,
+      event,
+      maxTeamSize,
+      lookingForRoles,
+      skills,
+    });
+
+    await newRequest.save();
+    res.status(201).json(newRequest);
+  } catch (err) {
+    console.error("Error creating match request:", err);
+    res.status(500).json({ error: "Server error while creating match request." });
+  }
 };
 
 // Update request

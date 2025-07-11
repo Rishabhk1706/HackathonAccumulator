@@ -9,7 +9,7 @@ const matchRequestSchema = new mongoose.Schema({
     min: [1, 'Team must have at least one member']
   },
   lookingForRoles: [{type: String, trim: true}],
-  skills: [{type: String, trim: true, trim: true}],
+  skills: [{type: String, trim: true}],                                                         //changed this line 11-07
   applicants: [{
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     role: {type: String},
