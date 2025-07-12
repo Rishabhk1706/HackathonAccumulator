@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const eventSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true},
   description: { type: String, required: true},
-  tags: [{type: String, required: true, enum: ['Hackathon', 'AI', 'Sports', 'Workshop', 'Debate', 'Coding']}],  
+  tags: [{type: String, required: true}],                                                               //removed enum 12-07 
   eventType: { type: String, required: true, enum: ['Virtual', 'In-Person', 'Hybrid']},
   location: { type: String, trim: true},                                                                    // required for offline events (validated below)
   startDate: { type: Date, required: true },

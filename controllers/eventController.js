@@ -13,7 +13,12 @@ export const getEventById = async (req, res) => {
   const event = await Event.findById(req.params.id)
     .populate("createdBy", "name")
     .populate("college", "name")
-    .populate("registeredUsers", "_id");                                // just _id is enough to check if user is registered
+    .populate({
+      path: "registeredUsers",
+      select: "name email college",
+      populate: { path: "college", select: "name" }                                          //updated by id controller 12-07
+    });
+
   res.status(200).json(event);
 };
 
