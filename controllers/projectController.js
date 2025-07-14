@@ -12,8 +12,8 @@ export const getAllProjects = async (req, res) => {
 export const getProjectById = async (req, res) => {
   const project = await ProjectPosting.findById(req.params.id)
     .populate("postedBy", "name")
-    .populate("selectedUsers.user", "name")
-    .populate("applicants.user", "_id"); // ✅ Add this line
+    .populate("selectedUsers.user", "name email")                                 //14-07 added email
+    .populate("applicants.user", "_id name email");                               //14-07 added name email
   res.status(200).json(project);
 };
 
@@ -26,8 +26,35 @@ export const createProject = async (req, res) => {
 
 // Update project
 export const updateProject = async (req, res) => {
-  const updated = await ProjectPosting.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.status(200).json(updated);
+  try {
+    const project = await ProjectPosting.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+
+    const { $push, $pull, ...rest } = req.body;                                                           //update controller updated 14-07
+                                                                                                      
+    // Handle $push
+    if ($push?.selectedUsers) {
+      project.selectedUsers.push($push.selectedUsers);
+    }
+
+    // Handle $pull
+    if ($pull?.selectedUsers) {
+      const userIdToRemove = $pull.selectedUsers.user?.toString?.();
+      project.selectedUsers = project.selectedUsers.filter(
+        entry => entry.user?.toString() !== userIdToRemove
+      );
+    }
+
+    // Handle regular updates (title, description, etc.)
+    Object.assign(project, rest);
+
+    await project.save(); // This triggers isFull() → status update
+
+    res.status(200).json(project);
+  } catch (err) {
+    console.error("Error updating project:", err);
+    res.status(500).json({ error: "Failed to update project" });
+  }
 };
 
 // Delete project
@@ -49,7 +76,7 @@ export const applyToProject = async (req, res) => {
   if (alreadyApplied) return res.status(400).json({ error: "Already applied" });
 
   project.applicants.push({
-    user: req.user._id,
+    user: req.user.id,                                                                          //14-07
     message: req.body.message || ""
   });
 

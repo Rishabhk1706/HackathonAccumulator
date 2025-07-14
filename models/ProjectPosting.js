@@ -22,7 +22,7 @@ const projectPostingSchema = new mongoose.Schema({
     },
     time: {
       type: String,
-      match: /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/,                           // Matches HH:MM-HH:MM
+      match: /^((0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM))-(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/,                          // 14-07 changed
       required: true
     }
   }],                                                               
@@ -77,6 +77,8 @@ projectPostingSchema.methods.isFull = function () {
 projectPostingSchema.pre('save', function (next) {
   if (this.isFull()) {
     this.status = 'Closed';
+  } else {                                                                            //changed 14-07 added else
+    this.status = 'Open';
   }
   next();
 });
