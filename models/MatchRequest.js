@@ -19,7 +19,7 @@ const matchRequestSchema = new mongoose.Schema({
   selectedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   status: {
     type: String,
-    enum: ['Pending', 'Matched'],
+    enum: ['Pending', 'Full', 'Past'],                                                                   //updated 15-07
     default: 'Pending'
   }
 }, { timestamps: true });
@@ -29,11 +29,20 @@ matchRequestSchema.methods.isTeamFull = function () {
   return this.selectedUsers.length >= this.maxTeamSize;
 };
 
-matchRequestSchema.pre('save', function (next) {
-  if (this.isTeamFull()) {
-    this.status = 'Matched';
+import Event from './Event.js';                                                                 //updated 15-07
+matchRequestSchema.pre('save', async function (next) {
+  try {
+    const event = await Event.findById(this.event);
+    if (event && event.startDate < new Date()) {
+      this.status = 'Past';
+    } else {
+      this.status = this.isTeamFull() ? 'Full' : 'Pending';
+    }
+    next();
+  } catch (err) {
+    console.error('Error in matchRequest pre-save:', err);
+    next(err);
   }
-  next();
 });
 
 matchRequestSchema.virtual('requestId').get(function () {
