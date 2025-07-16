@@ -12,7 +12,9 @@ export const getAllMatchRequests = async (req, res) => {
 export const getMatchRequestById = async (req, res) => {
   const request = await MatchRequest.findById(req.params.id)
     .populate("user", "name")
-    .populate("event", "title");
+    .populate("event", "title")
+    .populate("selectedUsers.user", "name email")                                 //16-07 added email
+    .populate("applicants.user", "_id name email");                               //16-07 added name email
   res.status(200).json(request);
 };
 
@@ -53,14 +55,36 @@ export const createMatchRequest = async (req, res) => {
   }
 };
 
-// Update request                                                                                   //updated 15-07
+// Update request                                                                                   //updated 16-07
 export const updateMatchRequest = async (req, res) => {
   try {
     const match = await MatchRequest.findById(req.params.id);
     if (!match) return res.status(404).json({ error: "Match request not found." });
 
-    Object.assign(match, req.body); // apply fields
-    await match.save(); // trigger pre-save
+    // Handle $push
+    if (req.body.$push?.selectedUsers) {
+      const { user, role } = req.body.$push.selectedUsers;
+      const alreadySelected = match.selectedUsers.some(sel => sel.user.toString() === user);
+      if (!alreadySelected) {
+        match.selectedUsers.push({ user, role });
+      }
+    }
+
+    // Handle $pull
+    if (req.body.$pull?.selectedUsers) {
+      const userId = req.body.$pull.selectedUsers.user;
+      match.selectedUsers = match.selectedUsers.filter(
+        sel => sel.user.toString() !== userId
+      );
+    }
+
+    // Remove $push and $pull from the body before regular field updates
+    const cleanBody = { ...req.body };
+    delete cleanBody.$push;
+    delete cleanBody.$pull;
+
+    Object.assign(match, cleanBody);
+    await match.save();
     res.status(200).json(match);
   } catch (err) {
     console.error("Error updating match request:", err);

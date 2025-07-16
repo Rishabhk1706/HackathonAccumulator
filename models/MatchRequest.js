@@ -16,7 +16,10 @@ const matchRequestSchema = new mongoose.Schema({
     description: {type: String, trim: true},
     appliedAt: { type: Date, default: Date.now }
   }],
-  selectedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  selectedUsers: [{
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },                                      //updated 16-07
+    role: { type: String, required: true, trim: true }                                                //updated 16-07
+  }],
   status: {
     type: String,
     enum: ['Pending', 'Full', 'Past'],                                                                   //updated 15-07
